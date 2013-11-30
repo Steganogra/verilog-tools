@@ -1,0 +1,26 @@
+// Example:
+//   python vpp+.py mux.v PORTS=4 WIDTH=8
+
+module mux
+(
+`for (i=0;i<`{PORTS};i=i+1)
+    input wire [`{WIDTH-1}:0]   port`{i}, 
+`endfor
+
+    input wire [`{log2w(PORTS)}-1:0] sel,
+    output reg [`{WIDTH-1}:0]   p
+);
+
+always @ *
+begin
+   case (sel)
+
+`for (i=1;i<`{PORTS};i=i+1)
+   `{log2w(PORTS)}'d`{i} : p = port`{i};
+`endfor   
+
+   default : p   = port0;
+   endcase
+end
+
+endmodule
