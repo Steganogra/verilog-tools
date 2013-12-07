@@ -147,7 +147,7 @@ def process_endfor(s, dbg_line, dbg_linenum):
         sys.stderr.write("    Line " + str(dbg_linenum) + ":" + dbg_line + "\n")
         sys.exit(1)
 
-    iteratorObj = _iterators[len(_iterators)-1];
+    iteratorObj = _iterators[len(_iterators)-1]
 
     # Execute iteration condition
     exec iteratorObj.str_iter in _symbols
@@ -240,6 +240,44 @@ def process_endif(s, dbg_line, dbg_linenum):
     return
 
 #-----------------------------------------------------------------
+# evaluate_subline
+#-----------------------------------------------------------------
+def evaluate_subline(s, index):
+
+    token = ""
+    token_idx = 0
+    next_index = 0
+    out = ""
+
+    # Find `{
+    while index != len(s):        
+        if s[index] == '`' and s[index+1] == '{':
+            index += 2
+            break
+        index += 1
+
+    # Extract escaped sequence
+    while index != len(s):
+        if s[index] == '}':
+            index += 1
+            break
+        # Recursive command - evaluate substring
+        elif s[index] == '`' and s[index+1] == '{':
+            inner_str, next_index = evaluate_subline(s, index)
+            
+            token += inner_str
+            index = next_index
+        else:
+            token += s[index]
+            token_idx += 1
+            index += 1
+
+    # Evaluate against known symbols list
+    out = str(eval(token,{},_symbols))
+
+    return (out, index)
+
+#-----------------------------------------------------------------
 # evaluate_line
 #-----------------------------------------------------------------
 def evaluate_line(s):
@@ -249,26 +287,13 @@ def evaluate_line(s):
     token_idx = 0
     out = ""
 
+    # Process line for escaped commands
     while index != len(s):
-
-        # Found `{
         if s[index] == '`' and s[index+1] == '{':
-            index += 2;
-
-            # Extract escaped sequence
-            while index != len(s):
-                if s[index] == '}':
-                    index += 1
-                    break
-                token += s[index]
-                token_idx += 1
-                index += 1
-            
-            # Evaluate against known symbols list
-            out += str(eval(token,{},_symbols))
-
-            token = ""
-            token_idx = 0            
+            # Evaluate command
+            substr, next_idx = evaluate_subline(s, index)
+            out += substr
+            index = next_idx
         else:
             out += s[index]
             index += 1
@@ -283,7 +308,7 @@ def process_line(line_num, s):
     # Remove trailing newline
     s = s.replace('\n','')
 
-    next_line = line_num + 1;
+    next_line = line_num + 1
 
     line = s
     token = ""
@@ -325,7 +350,7 @@ def process_line(line_num, s):
         return next_line
 
     # Evaluate line (may contain inline python)
-    processed_line = evaluate_line(line);
+    processed_line = evaluate_line(line)
     s = line = processed_line
     s = s.lstrip()
 
