@@ -4,6 +4,7 @@ import math
 _symbols = { }
 _cond = [ ]
 _iterators = [ ]
+_empties_in_a_row = 0
 
 # Classes
 class iterator:
@@ -331,6 +332,8 @@ def evaluate_line(s):
 #-----------------------------------------------------------------
 def process_line(line_num, s):
 
+    global _empties_in_a_row
+
     # Remove trailing newline
     s = s.replace('\n','')
 
@@ -390,8 +393,12 @@ def process_line(line_num, s):
     # Process line
     if token.startswith("//"):
         print line
+        _empties_in_a_row = 0;
+    elif token.startswith("`//"):
+        pass
     elif token.startswith("``"):
-        print line[line.find('`')+1:]     
+        print line[line.find('`')+1:]
+        _empties_in_a_row = 0;
     elif token == "`define":
         process_define(s, line, line_num)
     elif token == "`undef":
@@ -409,7 +416,20 @@ def process_line(line_num, s):
     elif token == "`if":
         process_if(s, line, line_num)
     else:
-        print line
+        # Remove trailing whitespace
+        newline = line.rstrip()
+        newline = newline.rstrip('\n')
+        
+        # Count number of empty lines in a row
+        if len(newline) == 0:
+            _empties_in_a_row = _empties_in_a_row + 1
+        else:
+            _empties_in_a_row = 0;
+
+        # Limit number of empty lines (often a product of nicely formatted 
+        # preprocessor input code which is stripped)
+        if _empties_in_a_row < 2:
+            print newline
 
     return next_line
 
