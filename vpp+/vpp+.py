@@ -195,6 +195,32 @@ def process_ifdef(s, dbg_line, dbg_linenum):
     return
 
 #-----------------------------------------------------------------
+# process_ifndef
+#-----------------------------------------------------------------
+def process_ifndef(s, dbg_line, dbg_linenum):
+
+    name  = ""
+
+    # Get first token to see if it is a directive
+    if s.find(' ') != -1:
+        name  = s[0:s.find(' ')]
+    else:
+        name = s
+
+    # Create condition object
+    condObj = condition()
+    condObj.is_valid = True
+
+    # Does this symbol exists?
+    if not (name in _symbols.keys()):
+        condObj.is_true = True
+
+    # Add to conditions stack
+    _cond.append(condObj)
+
+    return
+
+#-----------------------------------------------------------------
 # process_if
 #-----------------------------------------------------------------
 def process_if(s, dbg_line, dbg_linenum):
@@ -369,7 +395,9 @@ def process_line(line_num, s):
     elif token == "`define":
         process_define(s, line, line_num)
     elif token == "`undef":
-        process_undef(s, line, line_num)        
+        process_undef(s, line, line_num)
+    elif token == "`ifndef":
+        process_ifndef(s, line, line_num)        
     elif token == "`for":
         process_for(s, line, line_num)
     elif token == "`endfor":
