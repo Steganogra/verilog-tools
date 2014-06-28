@@ -91,7 +91,8 @@ def process_define(s, dbg_line, dbg_linenum):
 #-----------------------------------------------------------------
 def process_undef(s, dbg_line, dbg_linenum):
 
-    del _symbols[s]
+    if s in _symbols.keys():
+        del _symbols[s]
     return
 
 #-----------------------------------------------------------------
@@ -389,6 +390,7 @@ def process_line(line_num, s):
     if s.find(' ') != -1:
         token = s[0:s.find(' ')]
         s = s[s.find(' ')+1:]
+        s = s.lstrip()
     else:
         token = s
     
@@ -417,6 +419,8 @@ def process_line(line_num, s):
         process_ifdef(s, line, line_num)
     elif token == "`if":
         process_if(s, line, line_num)
+    elif token == "`endif":
+        pass
     else:
         # Remove trailing whitespace
         newline = line.rstrip()
