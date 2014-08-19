@@ -63,26 +63,48 @@ def get_token(s, seperator):
 #-----------------------------------------------------------------
 def process_define(s, dbg_line, dbg_linenum):
 
-    name  = ""
-    value = ""
+    # Macro style
+    # e.g. `define MACRO(a)   (a * 4)
+    if s.find(' ') > s.find('(') and s.find('(') != -1:
+        name  = s[0:s.find('(')]
+        s = s[s.find('('):]
+        args = s[0:s.find(')')+1]
+        s = s[s.find(')')+1:]
+        value = s
 
-    # Get first token to see if it is a directive
-    if s.find(' ') != -1:
-        name  = s[0:s.find(' ')]
-        value = s[s.find(' ')+1:]
+        if name in _symbols.keys():
+            sys.stderr.write("ERROR: Duplicate name '" + name + "'\n")
+            sys.stderr.write("    Line " + str(dbg_linenum) + ":" + dbg_line + "\n")
+            sys.exit(1)
+
+        func = "def %s%s:\n    return %s" % (name, args, value)
+        print "MACRO: \n" + func
+        exec func in _symbols, _symbols
+   
+    # Normal
     else:
-        name = s
+        name  = ""
+        value = ""
 
-    if name in _symbols.keys():
-        sys.stderr.write("ERROR: Duplicate name '" + name + "'\n")
-        sys.stderr.write("    Line " + str(dbg_linenum) + ":" + dbg_line + "\n")
-        sys.exit(1)
+        # e.g. `define DEF_NAME 3
+        if s.find(' ') != -1:
+            name  = s[0:s.find(' ')]
+            value = s[s.find(' ')+1:]
+        # Empty define
+        # e.g. `define DEF_NAME
+        else:
+            name = s
 
-    # Evaluate define to number
-    if len(value):
-        _symbols[name] = eval(value,{},_symbols)
-    else:
-        _symbols[name] = ""
+        if name in _symbols.keys():
+            sys.stderr.write("ERROR: Duplicate name '" + name + "'\n")
+            sys.stderr.write("    Line " + str(dbg_linenum) + ":" + dbg_line + "\n")
+            sys.exit(1)
+
+        # Evaluate define to number
+        if len(value):
+            _symbols[name] = eval(value,{},_symbols)
+        else:
+            _symbols[name] = ""
 
     return
 
@@ -496,6 +518,8 @@ def main(argv):
         try:
             line = read_file_line(inputfile, line_num)
             line_num = process_line(line_num, line)
+        except SystemExit as e:
+            sys.exit(1)
         except:
             sys.stderr.write("ERROR: " + str(sys.exc_info()[1]) + "\n")
             sys.stderr.write("    Line " + str(line_num) + ":" + line + "\n")
