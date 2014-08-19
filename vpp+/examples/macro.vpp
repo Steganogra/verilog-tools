@@ -1,0 +1,14 @@
+// Example:
+//   python vpp+.py macro.vpp
+
+`define DEF1    2
+`define DEF2    3
+
+`define MACRO1(a,b)  (a * b)
+
+
+`for (i=0;i<MACRO1(DEF1, DEF2);i=i+1)
+reg reg`{i};
+`endfor
+
+wire [`{MACRO1(2, 2)-1}:0] test_wire;
