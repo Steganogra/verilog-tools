@@ -78,7 +78,6 @@ def process_define(s, dbg_line, dbg_linenum):
             sys.exit(1)
 
         func = "def %s%s:\n    return %s" % (name, args, value)
-        print "MACRO: \n" + func
         exec func in _symbols, _symbols
    
     # Normal
